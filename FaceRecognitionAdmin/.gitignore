@@ -1,0 +1,18 @@
+﻿# pycharm
+.idea/
+.vs
+
+
+app/__pycache__
+app/utils/__pycache__
+app/views/__pycache__
+framework/__pycache__
+static/upload/alarm
+tests
+venv
+venv*
+
+
+
+
+

@@ -1,0 +1,12 @@
+﻿# clion
+.idea/
+log/*
+# vs
+.vs
+
+3rdparty/*
+FaceAnalyzer/x64
+x64/*
+
+
+

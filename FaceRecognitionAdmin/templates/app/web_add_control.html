@@ -1,0 +1,362 @@
+{% extends "app/base_site.html" %}
+
+{% block title %} 布控 {% endblock title %}
+
+{% block stylesheets %}
+  {{ block.super }}
+{% endblock stylesheets %}
+
+{% block content %}
+<style>
+    #video_player{
+        /*background-color: rgba(0,0,00,0.6);*/
+        width: 100%;
+        height: 100%;
+        /*object-fit: fill;*/
+        /*border-radius: 5px;*/
+        border: 1px solid #f0f0f0;
+
+    }
+    #video_player:focus {
+        outline: -webkit-focus-ring-color auto 0px;
+    }
+</style>
+<script>
+    let streamCodeDict = {};//视频流
+    let streamCode;
+
+</script>
+
+  <div class="right_col" role="main">
+    <div class="">
+
+      <div class="row">
+        <div class="col-md-12 col-sm-12 col-xs-12">
+          <div class="x_panel">
+            <div class="x_title">
+              <h2>{% if  "add" == handle %}添加{% else %}编辑{% endif %}布控</h2>
+              <div class="clearfix"></div>
+            </div>
+            <div class="x_content">
+
+              <div class="col-md-8 col-sm-8 col-xs-12">
+
+
+                <div class="video_canvas_box">
+                   <video id="video_player" controls autoplay>
+                        Your browser is too old which doesn't support h5 video
+                    </video>
+                </div>
+              </div>
+
+              <div class="col-md-4 col-sm-4 col-xs-12" >
+
+             <div class="form-horizontal form-label-left">
+
+                    <div class="form-group">
+                      <label class="control-label col-md-3 col-sm-3 col-xs-12">布控编号</label>
+                      <div class="col-md-9 col-sm-9 col-xs-12">
+                          <span style="height: 34px;line-height: 34px;padding: 6px 0;">{{ control.code }}</span>
+                      </div>
+                    </div>
+
+                <div class="form-group">
+                      <label class="control-label col-md-3 col-sm-3 col-xs-12">选择视频流</label>
+                    <div class="col-md-9 col-sm-9 col-xs-12">
+                        {% if  "add" == handle %}
+                          <select id="select_stream" class="select2_single form-control" required="required" >
+                              {% if streams|length == 0 %}
+                                  <option value="-1">暂无视频流</option>
+                              {% else %}
+                                  <option value="0">请选择视频流</option>
+
+                                {% for stream in streams %}
+                                    <script>
+                                        streamCode = '{{ stream.code }}';
+                                        streamCodeDict[streamCode] = {
+                                            'code':streamCode,
+                                            "app":'{{ stream.app }}',
+                                            "name":'{{ stream.name }}',
+                                            "video":'{{ stream.video }}',
+                                            "audio":'{{ stream.audio }}',
+                                            "flvUrl":'{{ stream.httpFlvUrl }}',
+                                        }
+                                    </script>
+                                    <option value="{{ stream.code }}">{{ stream.app }}/{{ stream.name }}</option>
+                                {% endfor %}
+                              {% endif %}
+                          </select>
+                     {% else %}
+                          <select id="select_stream"  disabled="disabled"  class="select2_single form-control" >
+                            <option selected value="{{ control.stream_app }}_{{ control.stream_name }}">{{ control.stream_app }}/{{ control.stream_name }}</option>
+                          </select>
+                     {% endif %}
+                   </div>
+               </div>
+
+
+                <div class="form-group">
+                  <label class="control-label col-md-3 col-sm-3 col-xs-12">视频信息</label>
+                  <div class="col-md-9 col-sm-9 col-xs-12">
+                         <input id="video"  type="text" disabled="disabled" value="{{ control.stream_video }}" class="form-control">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="control-label col-md-3 col-sm-3 col-xs-12">音频信息</label>
+                  <div class="col-md-9 col-sm-9 col-xs-12">
+                       <input id="audio"  type="text" disabled="disabled" value="{{ control.stream_audio }}" class="form-control">
+                  </div>
+                </div>
+
+
+
+                <div class="form-group">
+                  <label class="control-label col-md-3 col-sm-3 col-xs-12">播放地址</label>
+                  <div class="col-md-9 col-sm-9 col-xs-12">
+                       <input id="flvUrl"  type="url" disabled="disabled" value="{{ control_stream_flvUrl }}" class="form-control">
+                  </div>
+                </div>
+
+                    <div class="form-group">
+                      <div class="col-md-9 col-sm-9 col-xs-12 col-md-offset-3">
+                            <button id="play" type="button" class="btn btn-default btn-sm"><i class="fa fa-play"></i> 播放视频 </button>
+                            <button id="stop" type="button" class="btn btn-default btn-sm"><i class="fa fa-stop"></i> 停止播放 </button>
+                      </div>
+                    </div>
+                 <div class="ln_solid"></div>
+
+
+                   <div class="form-group">
+                      <label class="col-md-3 col-sm-3 col-xs-12 control-label">是否推流
+                      </label>
+                      <div class="col-md-9 col-sm-9 col-xs-12">
+
+                        <div class="radio">
+                          <label>
+                            <input type="radio" {% if control.push_stream == 0 %} checked="checked" {% endif %} value="0" name="push-stream"> 算法处理的视频不推流
+                          </label>
+                        </div>
+
+                        <div class="radio">
+                          <label>
+                            <input type="radio" {% if control.push_stream == 1 %} checked="checked" {% endif %} value="1" name="push-stream"> 算法处理的视频推流
+                          </label>
+                        </div>
+
+                      </div>
+                    </div>
+
+
+
+                     <div class="form-group">
+                      <label class="control-label col-md-3 col-sm-3 col-xs-12" for="textarea">备注
+                      </label>
+                      <div class="col-md-9 col-sm-9 col-xs-12">
+                        <textarea id="remark" required="required" name="textarea" class="form-control col-md-7 col-xs-12">{{ control.remark }}</textarea>
+
+                      </div>
+                    </div>
+
+
+                    <div class="ln_solid"></div>
+                    <div class="form-group">
+                      <div class="col-md-9 col-sm-9 col-xs-12 col-md-offset-3">
+                          <button id="handle_control" type="button" class="btn btn-success btn-sm">保存数据</button>
+
+                      </div>
+                    </div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}
+
+{% block javascripts %}
+  {{ block.super }}
+
+<script src="/static/lib/flv/flv.min.js"></script>
+<script>
+    let old_control_code= '{{ control.code }}';// 布控编号
+    let old_control_polygon = '{{ control.polygon }}';// 布控多边形坐标点
+    let old_control_stream_flvUrl = '{{ control_stream_flvUrl }}';// 已经布控的数据才存在该地址
+    let handle = '{{ handle }}';// 操作类型 add 或 edit
+
+    let eleVideoPlayer= document.getElementById("video_player");
+    let eleSelectStream = $("#select_stream");// select  选择视频流
+    let eleFlvUrl= $("#flvUrl");// input
+    let eleVideo = $("#video");// input
+    let eleAudio = $("#audio");// input
+    let eleBtnPlay = $("#play");//button
+    let eleBtnStop = $("#stop");//button
+
+    let elePushStream = $('input[type=radio][name=push-stream]');//radio
+    let pushStream = $('input[type=radio][name=push-stream]:checked').val();
+    let ele_remark = $("#remark");// textarea
+
+    let eleBtnHandleControl = $("#handle_control");//添加或更新布控数据
+
+    eleSelectStream.change(function () {
+
+        streamCode = $(this).val();
+        let stream = streamCodeDict[streamCode];
+        if (stream) {
+            let flvUrl = stream["flvUrl"]
+            eleFlvUrl.val(flvUrl)
+            eleVideo.val(stream["video"])
+            eleAudio.val(stream["audio"])
+            f_playStart(flvUrl);
+        }else{
+            eleFlvUrl.val("")
+            eleVideo.val("")
+            eleAudio.val("")
+            f_playStop();
+        }
+
+    });
+
+    eleBtnPlay.click(function () {
+        f_playStart(eleFlvUrl.val());
+    });
+    eleBtnStop.click(function (){
+        f_playStop();
+    });
+
+    elePushStream.change(function () {
+        pushStream = $(this).val();
+    });
+
+    eleBtnHandleControl.click(function () {// 添加或更新
+        f_postHandleControl();
+    });
+
+    function f_postHandleControl() {
+        streamCode = eleSelectStream.val().trim();//typeof string
+        if(streamCode==="-1"){
+            myAlert("暂无视频流","error");
+            return;
+        }else if(streamCode==="0"){
+            myAlert("请选择视频流","error");
+            return;
+        }
+
+        let remark = ele_remark.val().trim();
+
+        let data = {
+            "controlCode":old_control_code,
+            "pushStream":pushStream,
+            "remark":remark
+        }
+
+        let handleUrl;
+        if("add" === handle){
+            handleUrl = "/api/postAddControl";
+            let stream = streamCodeDict[streamCode];
+            if (stream){
+                data["streamApp"] = stream["app"]
+                data["streamName"] = stream["name"]
+                data["streamVideo"] = stream["video"]
+                data["streamAudio"] = stream["audio"]
+            }else{
+                return;
+            }
+        }else if("edit" === handle){
+            handleUrl = "/api/postEditControl";
+        }else{
+            return;
+        }
+
+
+        $.ajax({
+           url: handleUrl,
+           type: "post",
+           async: true,
+           data: data,
+           dataType: "json",
+           timeout: "3000",
+           error: function () {
+                myAlert("网络异常，请确定网络正常！","error");
+           },
+           success: function (res) {
+               if(1000 === res.code){
+                    myAlert(res.msg,"success");
+
+               }else{
+                    myAlert(res.msg,"error");
+               }
+           }
+        });
+
+    }
+    function f_playStart(flvUrl){
+
+
+        if(!flvjs.isSupported()){
+            myAlert("浏览器不支持flv.js！","error");
+            return;
+        }
+        if(typeof flvUrl === "undefined" || !flvUrl.endsWith(".flv")){
+            myAlert("播放地址格式不正确！","error");
+            return;
+        }
+
+
+        let mediaDataSource = {
+            type: 'flv',
+            enableStashBuffer:true,
+            isLive:true,
+            withCredentials:false,
+            hasAudio:true,
+            hasVideo:true,
+            url:flvUrl
+        };
+        //console.log('MediaDataSource', mediaDataSource);
+        //eleVideoPlayer.setAttribute('poster',"/static/images/media.jpg")
+
+        if (typeof player !== "undefined") {
+            if (player != null) {
+                player.unload();
+                player.detachMediaElement();
+                player.destroy();
+                player = null;
+            }
+        }
+        player = flvjs.createPlayer(mediaDataSource, {
+            enableWorker: false,
+            lazyLoadMaxDuration: 3 * 60,
+            seekType: 'range',
+        });
+        player.attachMediaElement(eleVideoPlayer);
+        player.load();
+        player.play();
+    }
+    function f_playStop(){
+        if (typeof player === "undefined" || player === null) {
+            myAlert("播放器暂未启动！","error");
+            return;
+        }
+        player.pause();
+        player.unload();
+        player.detachMediaElement();
+        player.destroy();
+        player = null;
+
+    }
+
+
+    window.onload = function () {
+        if(old_control_stream_flvUrl!==""){//编辑布控
+            f_playStart(old_control_stream_flvUrl);
+
+        }else{//新增布控
+
+        }
+    }
+</script>
+
+{% endblock javascripts %}

@@ -1,0 +1,9 @@
+Django==4.2
+psutil==5.9.1
+requests==2.28.2
+pyinstaller==5.7.0
+xlrd==1.2.0
+openpyxl==3.1.2
+numpy==1.26.3
+opencv-python==4.9.0.80
+dlib

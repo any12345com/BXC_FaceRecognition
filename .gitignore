@@ -1,0 +1,14 @@
+﻿# clion
+.idea/
+log/*
+
+# vs
+.vs
+
+data/face/*
+data/StreamPusher/*
+
+~$*
+bin/*
+
+
